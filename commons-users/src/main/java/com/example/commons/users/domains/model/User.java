@@ -1,8 +1,6 @@
 package com.example.commons.users.domains.model;
 
 import java.io.Serializable;
-import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.persistence.Column;
@@ -49,7 +47,7 @@ public class User implements Serializable {
 	joinColumns = @JoinColumn(name = "user_id"), 
 	inverseJoinColumns = @JoinColumn(name = "role_id"),
 	uniqueConstraints = {@UniqueConstraint(columnNames = {"user_id", "role_id"})})
-	private Collection<Role> roles = new HashSet<Role>();
+	private List<Role> roles;
 	
 	
 }
