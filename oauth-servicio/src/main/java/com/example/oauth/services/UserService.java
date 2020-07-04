@@ -5,5 +5,7 @@ import com.example.commons.users.domains.model.User;
 public interface UserService {
 	
 	public User findByUsername(String userName);
+	
+	public User update(User user, Long id);
 
 }

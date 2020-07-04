@@ -1,6 +1,5 @@
 package com.example.oauth.services;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -14,9 +13,10 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import com.example.commons.users.domains.model.Role;
 import com.example.commons.users.domains.model.User;
 import com.example.oauth.client.UserFeignClient;
+
+import feign.FeignException;
 
 @Service
 public class UserServiceImpl implements UserDetailsService, UserService{
@@ -28,26 +28,31 @@ public class UserServiceImpl implements UserDetailsService, UserService{
 	
 	@Override
 	public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-		User user = client.findByUser(username);
 		
-		if (user == null ) {
+		try {
+			User user = client.findByUser(username);
+			List<GrantedAuthority> authorities = user.getRoles().stream()
+					.map(role -> new SimpleGrantedAuthority(role.getDescription()))
+					.peek(authority -> log.info("Role: " +  authority.getAuthority()))
+					.collect(Collectors.toList());
+			
+			log.info("Username: " +  username);
+			return new org.springframework.security.core.userdetails.User(user.getUser(), user.getPassword(), user.getEnable(), 
+					true, true, true, authorities);
+		} catch (FeignException e) {
 			log.error("The username or password is incorrect");
 			throw new UsernameNotFoundException("The username or password is incorrect");
 		}
-		
-		List<GrantedAuthority> authorities = user.getRoles().stream()
-				.map(role -> new SimpleGrantedAuthority(role.getDescription()))
-				.peek(authority -> log.info("Role: " +  authority.getAuthority()))
-				.collect(Collectors.toList());
-		
-		log.info("Username: " +  username);
-		return new org.springframework.security.core.userdetails.User(user.getUser(), user.getPassword(), user.getEnable(), 
-				true, true, true, authorities);
 	}
 
 	@Override
 	public User findByUsername(String userName) {
 		return client.findByUser(userName);
+	}
+
+	@Override
+	public User update(User user, Long id) {
+		return client.update(user, id);
 	}
 
 }
